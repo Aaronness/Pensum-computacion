@@ -1060,6 +1060,28 @@
       display: inline-block;
       margin-top: 2px;
     }
+
+    .clear-slot-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      margin-top: 4px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      border: 1px solid rgba(248, 113, 113, .4);
+      background: rgba(248, 113, 113, .1);
+      color: var(--red);
+      font-size: 9px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: all .15s;
+    }
+
+    .clear-slot-btn:hover {
+      background: rgba(248, 113, 113, .25);
+      border-color: var(--red);
+    }
   </style>
 </head>
 
@@ -1399,12 +1421,18 @@
         }
       }
       const selectedBadge = sel ? `<div class="slot-selected-badge">${sel.code}</div>` : '';
+      const clearBtn = sel ? `<button class="clear-slot-btn" id="clr-${s.code}">✕ Quitar</button>` : '';
       d.innerHTML = `<div class="ccode">${displayCode}</div><div class="cname">${displayName}</div>
 <div class="cft"><span class="cuc">${s.uc > 0 ? s.uc + ' UC' : '—'}</span><span class="cbadge">${t.l}</span></div>
-${chips}${stbar}${selectedBadge}${virtHint}`;
+${chips}${stbar}${selectedBadge}${clearBtn}${virtHint}`;
       d.addEventListener('mouseenter', () => hlRel(s.code));
       d.addEventListener('mouseleave', clrHl);
       d.addEventListener('click', () => s.virt && (s.slot === 'OO' || s.slot === 'ELEC' || s.slot === 'COMP') ? openCat(s) : openMod(s.code));
+      // Attach clear button listener AFTER inserting HTML (stops click from bubbling to openCat)
+      if (sel) {
+        const btn = d.querySelector('#clr-' + s.code);
+        if (btn) btn.addEventListener('click', e => { e.stopPropagation(); clearSlot(s.code); });
+      }
       return d;
     }
     function buildSem(n) {
@@ -1614,6 +1642,16 @@ ${chips}${stbar}${selectedBadge}${virtHint}`;
           localStorage.setItem('pensum_slotSelections', json);
         }
       } catch (e) { }
+    }
+
+    function clearSlot(slotCode) {
+      delete slotSelections[slotCode];
+      saveSlotSelections();
+      const s = byCode[slotCode];
+      if (s) {
+        const existing = document.getElementById('c-' + slotCode);
+        if (existing) existing.replaceWith(buildCard(s));
+      }
     }
 
     // ── Close modal ──
